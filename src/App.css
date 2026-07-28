@@ -1,0 +1,226 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Poppins",sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#0f172a,#1e293b,#334155);
+    min-height:100vh;
+}
+
+.survey-container{
+    width:100%;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:50px 20px;
+}
+
+.survey-card{
+    width:100%;
+    max-width:1100px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(15px);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:20px;
+    padding:40px;
+    color:#fff;
+    box-shadow:0 15px 40px rgba(0,0,0,.35);
+}
+
+.survey-card h1{
+    text-align:center;
+    font-size:2.8rem;
+    color:#fff;
+    margin-bottom:5px;
+}
+
+.survey-card h3{
+    text-align:center;
+    font-weight:400;
+    color:#cbd5e1;
+    margin-bottom:40px;
+}
+
+.survey-card h2{
+    margin-top:25px;
+    margin-bottom:20px;
+    padding-bottom:8px;
+    border-bottom:2px solid rgba(255,255,255,.15);
+    color:#38bdf8;
+    font-size:1.4rem;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:18px;
+    margin-bottom:20px;
+}
+
+label{
+    display:block;
+    margin-top:18px;
+    margin-bottom:8px;
+    font-size:15px;
+    font-weight:500;
+    color:#f1f5f9;
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    padding:14px 16px;
+    border:none;
+    outline:none;
+    border-radius:10px;
+    background:rgba(255,255,255,.12);
+    color:white;
+    font-size:15px;
+    transition:.3s;
+}
+
+input::placeholder{
+    color:#d1d5db;
+}
+
+select option{
+    color:black;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+    background:rgba(255,255,255,.18);
+    box-shadow:0 0 0 3px rgba(56,189,248,.35);
+}
+
+.checkbox-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:12px;
+    margin-bottom:25px;
+}
+
+.checkbox-grid label{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(255,255,255,.08);
+    padding:12px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:.25s;
+    margin:0;
+}
+
+.checkbox-grid label:hover{
+    background:rgba(56,189,248,.18);
+    transform:translateY(-2px);
+}
+
+.checkbox-grid input{
+    width:18px;
+    height:18px;
+    accent-color:#0ea5e9;
+    cursor:pointer;
+}
+
+hr{
+    margin:35px 0;
+    border:none;
+    height:1px;
+    background:rgba(255,255,255,.12);
+}
+
+button{
+    width:100%;
+    margin-top:40px;
+    padding:16px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(90deg,#2563eb,#06b6d4);
+    color:white;
+    font-size:17px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.3s;
+}
+
+button:hover{
+    transform:translateY(-3px);
+    box-shadow:0 10px 25px rgba(37,99,235,.45);
+}
+
+button:active{
+    transform:scale(.98);
+}
+
+input[type="checkbox"]{
+    width:18px;
+    height:18px;
+}
+
+@media(max-width:992px){
+
+    .survey-card{
+        padding:30px;
+    }
+
+    .checkbox-grid{
+        grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    }
+
+}
+
+@media(max-width:768px){
+
+    .survey-card{
+        padding:25px;
+    }
+
+    .survey-card h1{
+        font-size:2.2rem;
+    }
+
+    .survey-card h2{
+        font-size:1.2rem;
+    }
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .checkbox-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media(max-width:480px){
+
+    .survey-container{
+        padding:15px;
+    }
+
+    .survey-card{
+        padding:18px;
+        border-radius:15px;
+    }
+
+    .survey-card h1{
+        font-size:1.8rem;
+    }
+
+    button{
+        padding:14px;
+        font-size:16px;
+    }
+
+}
