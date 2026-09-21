@@ -24,20 +24,36 @@ export default function AdminDashboard() {
       setLoading(true);
       setError("");
 
-      const collectionRef = collection(db, COLLECTION_NAME);
-      const snapshot = await getDocs(collectionRef);
+      const docsMap = new Map();
 
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      // Fetch from FashionSurvey (live user submissions)
+      try {
+        const snap1 = await getDocs(collection(db, "FashionSurvey"));
+        snap1.docs.forEach((doc) => {
+          docsMap.set(doc.id, { id: doc.id, ...doc.data() });
+        });
+      } catch (e) {
+        console.warn("Could not fetch FashionSurvey collection:", e);
+      }
 
-      console.log("Firebase data:", data);
+      // Fetch from FashionSurveyResponses_100_Datasets (seeded dataset)
+      try {
+        const snap2 = await getDocs(collection(db, "FashionSurveyResponses_100_Datasets"));
+        snap2.docs.forEach((doc) => {
+          if (!docsMap.has(doc.id)) {
+            docsMap.set(doc.id, { id: doc.id, ...doc.data() });
+          }
+        });
+      } catch (e) {
+        console.warn("Could not fetch FashionSurveyResponses_100_Datasets collection:", e);
+      }
 
-      setSurveyData(data);
+      const combinedData = Array.from(docsMap.values());
+      console.log("Combined survey data:", combinedData);
+
+      setSurveyData(combinedData);
     } catch (err) {
       console.error("Error loading survey data:", err);
-
       setError(
         "Unable to load data from Firebase. Check your Firestore collection name and Firebase configuration."
       );

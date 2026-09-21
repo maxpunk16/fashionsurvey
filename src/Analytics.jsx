@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Papa from "papaparse";
-
+import { db } from "./fbcfg";
+import { collection, getDocs } from "firebase/firestore";
 import {
   BarChart,
   Bar,
@@ -14,8 +15,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-
+  ResponsiveContainer
 } from "recharts";
 
 import "./Analytics.css";
@@ -78,15 +78,20 @@ const countValues = (data, field) => {
 
   data.forEach((item) => {
     const value = item[field];
+    if (value === undefined || value === null) return;
 
-    if (
-      value !== undefined &&
-      value !== null &&
-      String(value).trim() !== ""
-    ) {
-      const key = String(value).trim();
-
-      counts[key] = (counts[key] || 0) + 1;
+    if (Array.isArray(value)) {
+      value.forEach(v => {
+        if (v !== undefined && v !== null && String(v).trim() !== "") {
+          const key = String(v).trim();
+          counts[key] = (counts[key] || 0) + 1;
+        }
+      });
+    } else {
+      if (String(value).trim() !== "") {
+        const key = String(value).trim();
+        counts[key] = (counts[key] || 0) + 1;
+      }
     }
   });
 
@@ -105,21 +110,28 @@ const createCrosstab = (data, field1, field2) => {
   const colSet = new Set();
 
   data.forEach((item) => {
-    const v1 = item[field1];
-    const v2 = item[field2];
+    const rawV1 = item[field1];
+    const rawV2 = item[field2];
 
-    if (
-      v1 != null && String(v1).trim() !== "" &&
-      v2 != null && String(v2).trim() !== ""
-    ) {
-      const r = String(v1).trim();
-      const c = String(v2).trim();
+    const vals1 = Array.isArray(rawV1) ? rawV1 : [rawV1];
+    const vals2 = Array.isArray(rawV2) ? rawV2 : [rawV2];
 
-      if (!matrix[r]) matrix[r] = {};
+    vals1.forEach(v1 => {
+      vals2.forEach(v2 => {
+        if (
+          v1 != null && String(v1).trim() !== "" &&
+          v2 != null && String(v2).trim() !== ""
+        ) {
+          const r = String(v1).trim();
+          const c = String(v2).trim();
 
-      matrix[r][c] = (matrix[r][c] || 0) + 1;
-      colSet.add(c);
-    }
+          if (!matrix[r]) matrix[r] = {};
+
+          matrix[r][c] = (matrix[r][c] || 0) + 1;
+          colSet.add(c);
+        }
+      });
+    });
   });
 
   const rows = Object.keys(matrix).sort();
@@ -152,8 +164,8 @@ const BarChartSection = ({
           layout === "vertical"
             ? { left: 60, right: 20 }
             : angleX
-            ? { top: 20, right: 20, left: 10, bottom: 60 }
-            : { top: 20, right: 20, left: 10, bottom: 10 }
+              ? { top: 20, right: 20, left: 10, bottom: 60 }
+              : { top: 20, right: 20, left: 10, bottom: 10 }
         }
       >
         <CartesianGrid strokeDasharray="3 3" />
@@ -302,31 +314,25 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
 
 
+
+
   // ----------------------------------------------------------
   // FIREBASE REALTIME LISTENER
   // ----------------------------------------------------------
 
   useEffect(() => {
-    fetch("/FashionSurveyResponses_100_Datasets.csv")
-      .then((response) => response.text())
-      .then((csvText) => {
-        Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            setSurveyData(results.data);
-            setLoading(false);
-          },
-          error: (error) => {
-            console.error("Error parsing CSV:", error);
-            setLoading(false);
-          },
-        });
-      })
-      .catch((error) => {
-        console.error("Error fetching CSV:", error);
+    const fetchFromFirebase = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "FashionSurvey"));
+        const data = querySnapshot.docs.map(doc => doc.data());
+        setSurveyData(data);
         setLoading(false);
-      });
+      } catch (error) {
+        console.error("Error fetching Firestore:", error);
+        setLoading(false);
+      }
+    };
+    fetchFromFirebase();
   }, []);
 
 
@@ -343,46 +349,46 @@ export default function Analytics() {
     // BASIC DISTRIBUTIONS (Sections 11-22 in Python)
     // --------------------------------------------------------
 
-    const productDemand     = countValues(surveyData, "nextPurchase");
-    const categoryDemand    = countValues(surveyData, "favoriteCategories");
-    const brandDemand       = countValues(surveyData, "favoriteBrands");
-    const sizeDemand        = countValues(surveyData, "preferredSize");
-    const colorDemand       = countValues(surveyData, "nextColor");
-    const fitDemand         = countValues(surveyData, "preferredFit");
-    const shoppingMode      = countValues(surveyData, "shoppingMode");
-    const gender            = countValues(surveyData, "gender");
-    const ageGroup          = countValues(surveyData, "ageGroup");
-    const city              = countValues(surveyData, "city");
-    const season            = countValues(surveyData, "shoppingSeason");
-    const purchaseFactor    = countValues(surveyData, "purchaseFactor");
-    const stockBehavior     = countValues(surveyData, "outOfStockBehaviour");
+    const productDemand = countValues(surveyData, "nextPurchase");
+    const categoryDemand = countValues(surveyData, "favoriteCategories");
+    const brandDemand = countValues(surveyData, "favoriteBrands");
+    const sizeDemand = countValues(surveyData, "preferredSize");
+    const colorDemand = countValues(surveyData, "nextColor");
+    const fitDemand = countValues(surveyData, "preferredFit");
+    const shoppingMode = countValues(surveyData, "shoppingMode");
+    const gender = countValues(surveyData, "gender");
+    const ageGroup = countValues(surveyData, "ageGroup");
+    const city = countValues(surveyData, "city");
+    const season = countValues(surveyData, "shoppingSeason");
+    const purchaseFactor = countValues(surveyData, "purchaseFactor");
+    const stockBehavior = countValues(surveyData, "outOfStockBehaviour");
     const shoppingFrequency = countValues(surveyData, "shoppingFrequency");
-    const trendSource       = countValues(surveyData, "trendSource");
+    const trendSource = countValues(surveyData, "trendSource");
 
     // Additional fields from fasionsurvey.py
-    const summerProducts     = countValues(surveyData, "summerProducts");
-    const winterProducts     = countValues(surveyData, "winterProducts");
+    const summerProducts = countValues(surveyData, "summerProducts");
+    const winterProducts = countValues(surveyData, "winterProducts");
     const discountPreference = countValues(surveyData, "discountPreference");
-    const occupation         = countValues(surveyData, "occupation");
-    const locality           = countValues(surveyData, "locality");
-    const trendFollower      = countValues(surveyData, "trendFollower");
-    const shoppingTime       = countValues(surveyData, "shoppingTime");
-    const revisitReason      = countValues(surveyData, "revisitReason");
-    const brandReason        = countValues(surveyData, "brandReason");
-    const leastPurchased     = countValues(surveyData, "leastPurchased");
+    const occupation = countValues(surveyData, "occupation");
+    const locality = countValues(surveyData, "locality");
+    const trendFollower = countValues(surveyData, "trendFollower");
+    const shoppingTime = countValues(surveyData, "shoppingTime");
+    const revisitReason = countValues(surveyData, "revisitReason");
+    const brandReason = countValues(surveyData, "brandReason");
+    const leastPurchased = countValues(surveyData, "leastPurchased");
     const trendPurchaseSpeed = countValues(surveyData, "trendPurchaseSpeed");
-    const monthlyBudget      = countValues(surveyData, "monthlyBudget");
-    const favoriteColors     = countValues(surveyData, "favoriteColors");
+    const monthlyBudget = countValues(surveyData, "monthlyBudget");
+    const favoriteColors = countValues(surveyData, "favoriteColors");
 
 
     // --------------------------------------------------------
     // CROSS ANALYSIS (Section 23 in Python)
     // --------------------------------------------------------
 
-    const cityProduct    = createCrosstab(surveyData, "city", "nextPurchase");
-    const ageProduct     = createCrosstab(surveyData, "ageGroup", "nextPurchase");
-    const seasonProduct  = createCrosstab(surveyData, "shoppingSeason", "nextPurchase");
-    const genderProduct  = createCrosstab(surveyData, "gender", "nextPurchase");
+    const cityProduct = createCrosstab(surveyData, "city", "nextPurchase");
+    const ageProduct = createCrosstab(surveyData, "ageGroup", "nextPurchase");
+    const seasonProduct = createCrosstab(surveyData, "shoppingSeason", "nextPurchase");
+    const genderProduct = createCrosstab(surveyData, "gender", "nextPurchase");
 
 
     // --------------------------------------------------------
@@ -483,12 +489,12 @@ export default function Analytics() {
 
   const mostDemandedProduct = topVal(analytics.productDemand);
   const mostPopularCategory = topVal(analytics.categoryDemand);
-  const mostPopularBrand    = topVal(analytics.brandDemand);
-  const mostPreferredSize   = topVal(analytics.sizeDemand);
-  const mostPopularMode     = topVal(analytics.shoppingMode);
-  const topColor            = topVal(analytics.colorDemand);
-  const topFit              = topVal(analytics.fitDemand);
-  const topTrendSource      = topVal(analytics.trendSource);
+  const mostPopularBrand = topVal(analytics.brandDemand);
+  const mostPreferredSize = topVal(analytics.sizeDemand);
+  const mostPopularMode = topVal(analytics.shoppingMode);
+  const topColor = topVal(analytics.colorDemand);
+  const topFit = topVal(analytics.fitDemand);
+  const topTrendSource = topVal(analytics.trendSource);
 
 
   // ==========================================================
@@ -1037,8 +1043,8 @@ export default function Analytics() {
                         high
                           ? "status high"
                           : medium
-                          ? "status medium"
-                          : "status low"
+                            ? "status medium"
+                            : "status low"
                       }
                     >
                       {item.recommendation}
